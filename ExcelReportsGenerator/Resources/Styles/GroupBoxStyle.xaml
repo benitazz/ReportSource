@@ -1,0 +1,184 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+
+    <!--Heading One Style-->
+    <Style x:Key="HeadingOneGroupBox"
+         TargetType="GroupBox">
+        <Setter Property="FontFamily"
+            Value="SegoeUI" />
+        <Setter Property="FontSize"
+            Value="14" />
+        <Setter Property="Foreground"
+            Value="{DynamicResource  HeadingForegroundBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0"
+                    Background="{DynamicResource HeadingOneBackgroundBrush}"
+                    BorderBrush="{DynamicResource HeadingBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2,2,0,0">
+                            <ContentPresenter Margin="4"
+                                ContentSource="Header"
+                                RecognizesAccessKey="True" />
+                        </Border>
+                        <Border Grid.Row="1"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{DynamicResource HeadingBorderBrush}"
+                    BorderThickness="1,0,1,1"
+                    CornerRadius="0,0,2,2">
+                            <ContentPresenter />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--Heading Two Style-->
+    <Style x:Key="HeadingTwoGroupBox"
+         TargetType="GroupBox">
+        <Setter Property="FontFamily"
+            Value="SegoeUI" />
+        <Setter Property="FontSize"
+            Value="12" />
+        <Setter Property="Foreground"
+            Value="Black" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0"
+                    Background="{DynamicResource HeadingTwoBackgroundBrush}"
+                    BorderBrush="{DynamicResource  HeadingBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2,2,0,0">
+                            <ContentPresenter Margin="4"
+                                ContentSource="Header"
+                                RecognizesAccessKey="True" />
+                        </Border>
+                        <Border Grid.Row="1"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{DynamicResource  HeadingBorderBrush}"
+                    BorderThickness="1,0,1,1"
+                    CornerRadius="0,0,2,2">
+                            <ContentPresenter />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--Heading Two Style-->
+    <Style x:Key="HeadingThreeGroupBox"
+         TargetType="GroupBox">
+        <Setter Property="FontFamily"
+            Value="SegoeUI" />
+        <Setter Property="FontSize"
+            Value="12" />
+        <Setter Property="Foreground"
+            Value="{DynamicResource  HeadingForegroundBrush}" />
+        <Setter Property="FontWeight"
+            Value="DemiBold"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0"
+                    Background="{DynamicResource HeadingThreeBackgroundBrush}"
+                    BorderBrush="{DynamicResource  HeadingBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2,2,0,0">
+                            <ContentPresenter Margin="4"
+                                ContentSource="Header"
+                                RecognizesAccessKey="True" />
+                        </Border>
+                        <Border Grid.Row="1"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{DynamicResource  HeadingBorderBrush}"
+                    BorderThickness="1,0,1,1"
+                    CornerRadius="0,0,2,2">
+                            <ContentPresenter />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!--Heading Normal Style-->
+    <!--<Style TargetType="GroupBox">
+    <Setter Property="FontFamily"
+            Value="SegoeUI" />
+    <Setter Property="FontSize"
+            Value="12" />
+    <Setter Property="Foreground"
+            Value="{DynamicResource  HeadingForegroundBrush}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="GroupBox">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Border Grid.Row="0"
+                    Background="{DynamicResource HeadingNormalBackgroundBrush}"
+                    BorderBrush="{DynamicResource HeadingBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2,2,0,0">
+              <ContentPresenter Margin="4"
+                                ContentSource="Header"
+                                RecognizesAccessKey="True" />
+            </Border>
+            <Border Grid.Row="1"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{DynamicResource HeadingBorderBrush}"
+                    BorderThickness="1,0,1,1"
+                    CornerRadius="0,0,2,2">
+              <ContentPresenter />
+            </Border>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>-->
+
+    <!--Heading Two Style-->
+    <Style x:Key="HeadingTwoDataGrid"
+         TargetType="GroupBox">
+        <Setter Property="FontFamily"
+            Value="SegoeUI" />
+        <Setter Property="FontSize"
+            Value="12" />
+        <Setter Property="Foreground"
+            Value="{DynamicResource  HeadingForegroundBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGrid">
+
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+
+</ResourceDictionary>

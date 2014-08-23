@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:viewModels="clr-namespace:ExcelReportsGenerator.ViewModels"
+                    xmlns:views="clr-namespace:ExcelReportsGenerator.Views">
+
+    <DataTemplate DataType="{x:Type viewModels:ExcelReportViewModel}">
+        <views:ExcelReportView/>
+    </DataTemplate>
+    
+    <DataTemplate DataType="{x:Type viewModels:TextReportViewModel}">
+        <views:TextReportView/>
+    </DataTemplate>
+    
+</ResourceDictionary>

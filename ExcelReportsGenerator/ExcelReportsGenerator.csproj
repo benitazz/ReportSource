@@ -76,7 +76,6 @@
     <Compile Include="Common\FluidProgressBar\FluidProgressBar.xaml.cs">
       <DependentUpon>FluidProgressBar.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Common\TestClass.cs" />
     <Compile Include="Common\WpfExtensions\CloseableTabItem .cs" />
     <Compile Include="Common\WpfExtensions\ImageExtension.cs" />
     <Compile Include="Common\WpfExtensions\TreeViewExtension.cs" />

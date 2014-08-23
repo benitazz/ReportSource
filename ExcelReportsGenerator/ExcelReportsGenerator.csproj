@@ -230,7 +230,7 @@
     <Resource Include="Resources\Images\File-Text-icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Images\Windows8loader.gif" />
+    <Resource Include="Resources\Images\Windows8Loader.gif" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

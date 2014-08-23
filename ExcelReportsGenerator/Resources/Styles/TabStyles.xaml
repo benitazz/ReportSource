@@ -201,7 +201,7 @@
                    DataContext="{Binding ShellContent, Mode=TwoWay}"
                    Visibility="{Binding IsBusy, Mode=TwoWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                    ZIndex="90">
-                <wpfExtensions:ImageExtension Stretch="None" GifSource="/ExcelReportsGenerator;component/Resources/Images/Windows8loader.gif" AutoStart="True"/>       
+                <wpfExtensions:ImageExtension Stretch="None" GifSource="/ExcelReportsGenerator;component/Resources/Images/Windows8Loader.gif" AutoStart="True"/>       
             </Grid>
          </Grid>
     </DataTemplate>

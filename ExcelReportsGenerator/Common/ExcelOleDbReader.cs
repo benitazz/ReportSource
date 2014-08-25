@@ -56,11 +56,15 @@ namespace ExcelReportsGenerator.Common
 
         var tableList = new List<string>();
 
-        tableList.AddRange(from DataRow row in tableInfo.Rows select row["TABLE_NAME"].ToString());
+        tableList.AddRange(from DataRow row in tableInfo.Rows
+                           where row["TABLE_NAME"] != null && 
+                                !row["TABLE_NAME"].ToString().Contains("_xlnm#_FilterDatabase")
+                           select row["TABLE_NAME"].ToString());
 
         sheets = tableList;
 
-        var defaultSheet = tableList[1];
+        var defaultSheet = tableList[0];
+
         string selectSql = string.Format(@"SELECT * FROM [{0}]", defaultSheet);
 
         // MessageBox.Show(selectSql);

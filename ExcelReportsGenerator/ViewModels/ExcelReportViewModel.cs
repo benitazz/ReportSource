@@ -421,7 +421,7 @@ namespace ExcelReportsGenerator.ViewModels
 
           this.Sheets = ExcelOleDbReader.GetSheetNames();
 
-          this.SelectedSheet = this.Sheets[1];
+          this.SelectedSheet = this.Sheets[0];
           this.SelectedColumnFilter = "Quantity";
         }
       }

@@ -79,6 +79,7 @@
     <Compile Include="Common\WpfExtensions\CloseableTabItem .cs" />
     <Compile Include="Common\WpfExtensions\ImageExtension.cs" />
     <Compile Include="Common\WpfExtensions\TreeViewExtension.cs" />
+    <Compile Include="Common\Xml\XmlSerialization.cs" />
     <Compile Include="Controls\MenuControl.xaml.cs">
       <DependentUpon>MenuControl.xaml</DependentUpon>
     </Compile>
@@ -240,6 +241,10 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Images\Reports1.jpg" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Common\Configurations\NavigationConfig.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

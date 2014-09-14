@@ -45,7 +45,7 @@ namespace ExcelReportsGenerator
     {
       var shellContent = new TabControlModel
                            {
-                             ShellContent = new ExcelReportViewModel(),
+                             TabContent = new ExcelReportViewModel(),
                              HeaderName = "Excel Reports",
                              IsActive = true,
                              ImageSource = "/ExcelReportsGenerator;component/Resources/Images/ExelIcon.jpg",
@@ -54,7 +54,7 @@ namespace ExcelReportsGenerator
 
       var hostViewModel = new ShellViewModel
                             {
-                              ShellContents =
+                              TabControlsObservableCollection =
                                 new ObservableCollection<TabControlModel>
                                   {
                                     shellContent,

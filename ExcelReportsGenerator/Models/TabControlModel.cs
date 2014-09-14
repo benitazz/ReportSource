@@ -37,7 +37,7 @@ namespace ExcelReportsGenerator.Models
     /// <summary>
     ///   The _shell content.
     /// </summary>
-    private object _shellContent;
+    private object _tabContent;
 
     #endregion
 
@@ -137,16 +137,16 @@ namespace ExcelReportsGenerator.Models
     /// <summary>
     ///   Gets or sets the shell content.
     /// </summary>
-    public object ShellContent
+    public object TabContent
     {
       get
       {
-        return this._shellContent;
+        return this._tabContent;
       }
 
       set
       {
-        this._shellContent = value;
+        this._tabContent = value;
         this.NotifyPropertyChanged();
       }
     }

@@ -195,10 +195,10 @@
 
     <DataTemplate x:Key="MainTabItemContentTemplate">
         <Grid ZIndex="80">
-            <UserControl Content="{Binding ShellContent, Mode=TwoWay}" Margin="4" />
+            <UserControl Content="{Binding TabContent, Mode=TwoWay}" Margin="4" />
 
             <Grid  Background="#B2D3D3D3"
-                   DataContext="{Binding ShellContent, Mode=TwoWay}"
+                   DataContext="{Binding TabContent, Mode=TwoWay}"
                    Visibility="{Binding IsBusy, Mode=TwoWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                    ZIndex="90">
                 <wpfExtensions:ImageExtension Stretch="None" GifSource="/ExcelReportsGenerator;component/Resources/Images/Windows8Loader.gif" AutoStart="True"/>       

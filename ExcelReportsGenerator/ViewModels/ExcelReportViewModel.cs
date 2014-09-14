@@ -6,6 +6,9 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
@@ -464,11 +467,14 @@ namespace ExcelReportsGenerator.ViewModels
       var view = new DataView(this._excelSheetDataTable);
       DataTable distinctValues = view.ToTable(true, this.SelectedColumnFilter);
 
+      var directoryName = string.Empty;
+
       foreach (DataRow row in distinctValues.Rows)
       {
         var value = row[this.SelectedColumnFilter];
 
         var expression = string.Format("[{0}] = '{1}'", this.SelectedColumnFilter, value);
+
         DataRow[] filteredRows = this._excelSheetDataTable.Select(expression);
 
         foreach (var filteredRow in filteredRows)
@@ -478,21 +484,49 @@ namespace ExcelReportsGenerator.ViewModels
 
         var dissectColumnName = value.ToString().Trim();
 
-        dissectColumnName = dissectColumnName.Replace(@"\", "_");
+        dissectColumnName = this.RemoveSpecialCharacters(dissectColumnName);
 
-        dissectColumnName = dissectColumnName.Replace('/', '_');
+         var fileName = Path.GetFileNameWithoutExtension(this.FileName);
 
-        var filename = string.Format(@"C:\Dissect\{0}_{1}", dissectColumnName, Path.GetFileName(this.FileName));
+          fileName = this.RemoveSpecialCharacters(fileName);
+
+        directoryName = string.Format(@"C:\Dissect\{0}", fileName);
+       FileBrowserHelper.CreateDirectory(directoryName);
+
+        var filename = string.Format(@"{0}\{1}_{2}", directoryName, dissectColumnName, Path.GetFileName(this.FileName));
+        
         ExcelOleDbReader.ExportToXlsx(filename, results, value.ToString());
 
         results.Rows.Clear();
       }
 
       // opens the folder in explorer
-      Process.Start(@"C:\Dissect");
+      Process.Start(directoryName);
 
       // opens the folder in explorer
       // Process.Start("explorer.exe", @"c:\temp");
+    }
+
+    /// <summary>
+    /// Removes the special characters.
+    /// </summary>
+    /// <param name="str">The string.</param>
+    /// <returns></returns>
+    private string RemoveSpecialCharacters(string str)
+    {
+        return Regex.Replace(str, "[^a-zA-Z0-9_.]+", "_", RegexOptions.Compiled);
+
+        /*var sb = new StringBuilder();
+
+        foreach (char c in str)
+        {
+            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_')
+            {
+                sb.Append(c);
+            }
+        }
+
+        return sb.ToString();*/
     }
 
     /// <summary>

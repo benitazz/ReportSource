@@ -36,7 +36,7 @@
         <StackPanel DockPanel.Dock="Top"
                     Margin="0,2,0,2"
                     DataContext="{Binding SelectedTabControl, Mode=TwoWay}"
-                    Visibility="{Binding ShellContent.IsBusy, Converter={StaticResource BooleanToVisibilityConverterKey}}">
+                    Visibility="{Binding TabContent.IsBusy, Converter={StaticResource BooleanToVisibilityConverterKey}}">
             <fluidProgressBar:FluidProgressBar HorizontalAlignment="Stretch"
                                        VerticalAlignment="Stretch"
                                        Foreground="Blue"
@@ -83,7 +83,7 @@
                           HorizontalScrollBarVisibility="Auto" 
                           Grid.Column="2">
 
-               <TabControl ItemsSource="{Binding ShellContents}"
+                <TabControl ItemsSource="{Binding TabControlsObservableCollection}"
                            SelectedValue="{Binding SelectedTabControl}"
                            SelectedIndex="{Binding SelectedTabIndex}"
                            ItemContainerStyle="{DynamicResource MainTabStyle}">

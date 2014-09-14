@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfTreeViewModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<TreeViewModel>
+		<DllKey>ExcelReportsGenerator.ViewModels.ExcelReportViewModel</DllKey>
+		<IsExpanded>false</IsExpanded>
+		<IsSelected>true</IsSelected>
+		<Title>Excel Reports</Title>
+		<ImageSource>/ExcelReportsGenerator;component/Resources/Images/ExelIcon.jpg</ImageSource>
+	</TreeViewModel>
+	<TreeViewModel>
+		<DllKey>ExcelReportsGenerator.ViewModels.TextReportViewModel</DllKey>
+		<IsExpanded>false</IsExpanded>
+		<IsSelected>false</IsSelected>
+		<Title>Text Reports</Title>
+		<ImageSource>/ExcelReportsGenerator;component/Resources/Images/File-Text-icon.png</ImageSource>
+	</TreeViewModel>
+</ArrayOfTreeViewModel>

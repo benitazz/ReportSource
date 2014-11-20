@@ -20,7 +20,7 @@
     /// <summary>
     /// Reports the generator.
     /// </summary>
-    void ExcelReportGenerator();
+    void ReportGenerator();
 
     #endregion
   }

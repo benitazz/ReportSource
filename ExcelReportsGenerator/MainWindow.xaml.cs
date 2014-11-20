@@ -43,7 +43,7 @@ namespace ExcelReportsGenerator
     /// </param>
     private void MainWindowLoaded(object sender, RoutedEventArgs e)
     {
-      var shellContent = new TabControlModel
+      var tabControlModel = new TabControlModel
                            {
                              TabContent = new ExcelReportViewModel(),
                              HeaderName = "Excel Reports",
@@ -57,9 +57,9 @@ namespace ExcelReportsGenerator
                               TabControlsObservableCollection =
                                 new ObservableCollection<TabControlModel>
                                   {
-                                    shellContent,
+                                    tabControlModel,
                                   },
-                                SelectedTabControl = shellContent
+                                SelectedTabControl = tabControlModel
                             };
       
      this.MainViewContent.Content = new ShellView { DataContext = hostViewModel };

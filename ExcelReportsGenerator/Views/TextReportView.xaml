@@ -6,7 +6,85 @@
              mc:Ignorable="d" 
              d:DesignHeight="600" 
              d:DesignWidth="800">
-    <Grid>
-            <TextBlock Text="itumeleng!!!" VerticalAlignment="Center" HorizontalAlignment="Center"></TextBlock>
-    </Grid>
+    <StackPanel>
+
+        <GroupBox Margin="4,4"
+                  Header="File Details"
+                  Style="{DynamicResource HeadingTwoGroupBox}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="165"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Input File Name:"
+                           Grid.Row="0"
+                           Grid.Column="0"
+                           Margin="4,0,4,0"/>
+
+                <TextBox Text="{Binding FileName}"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         IsReadOnly="True"
+                         Margin="4,0,4,0"/>
+
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Header="Report Filter"
+                  Margin="4,4"
+                  Style="{DynamicResource HeadingTwoGroupBox}">
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25"/>
+                    <RowDefinition Height="25"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="165"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Filters"
+                           Grid.Row="0"
+                           Grid.Column="0"
+                           Margin="4,0,4,0"/>
+
+                <TextBox Text="{Binding Filters}"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         CharacterCasing="Upper"
+                         Margin="4,0,4,0"/>
+                
+                <StackPanel Grid.Row="1"
+                            Grid.Column="1"
+                            HorizontalAlignment="Right">
+                    <Button Content="Apply Changes"
+                            Command="{Binding ApplyChangesCommad}"
+                            Margin="0,0,4,0"
+                            Width="160"/>
+                </StackPanel>
+
+            </Grid>
+        </GroupBox>
+
+       <GroupBox Margin="4,4"
+                  Header="Text File Data"
+                  Height="540"
+                  Style="{DynamicResource HeadingTwoGroupBox}">
+        <Border Name="Border1">
+            <DataGrid ItemsSource="{Binding TextData}" 
+                        AlternatingRowBackground="AliceBlue"  
+                        AlternationCount="2"
+                        Margin="0,4,0,0"
+                        Width="{Binding ActualWidth, ElementName=Border1}"/>
+        </Border>
+        </GroupBox>
+    </StackPanel>
 </UserControl>

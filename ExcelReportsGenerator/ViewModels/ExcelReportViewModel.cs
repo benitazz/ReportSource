@@ -6,13 +6,13 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
 using BenMVVM;
+
+using ExcelReportsDatastore;
 
 using ExcelReportsGenerator.Common;
 using ExcelReportsGenerator.Common.Helpers;
@@ -165,7 +165,7 @@ namespace ExcelReportsGenerator.ViewModels
     {
       get
       {
-        return new RelayCommand(param => this.ExcelReportGenerator());
+        return new RelayCommand(param => this.ReportGenerator());
       }
     }
 
@@ -345,7 +345,7 @@ namespace ExcelReportsGenerator.ViewModels
     /// <summary>
     ///   Quantities the report.
     /// </summary>
-    public void ExcelReportGenerator()
+    public void ReportGenerator()
     {
       if (this._excelSheetDataTable == null)
       {
@@ -473,7 +473,9 @@ namespace ExcelReportsGenerator.ViewModels
       {
         var value = row[this.SelectedColumnFilter];
 
-        var expression = string.Format("[{0}] = '{1}'", this.SelectedColumnFilter, value);
+        var newValue = @value.ToString().Replace("'", "''");
+       
+        var expression = string.Format("[{0}] = '{1}'", this.SelectedColumnFilter, newValue);
 
         DataRow[] filteredRows = this._excelSheetDataTable.Select(expression);
 

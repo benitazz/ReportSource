@@ -6,7 +6,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Xml;
-using System.Xml.Serialization;
 
 using BenMVVM;
 
@@ -75,40 +74,6 @@ namespace ExcelReportsGenerator.ViewModels
                 xmlDoc.Load(@"../../Common/Configurations/NavigationConfig.xml");
                 var navigationXMl = xmlDoc.InnerXml;
                 this.NavigateItems = XmlSerialization<ObservableCollection<TreeViewModel>>.Deserialize(navigationXMl);
-
-                /*var defaultSelectedNavigation = new TreeViewModel
-                                                    {
-                                                        Title = "Excel Reports",
-                                                        IsSelected = true,
-                                                        ImageSource =
-                                                            "/ExcelReportsGenerator;component/Resources/Images/ExelIcon.jpg",
-                                                        DllKey = "ExcelReportsGenerator.ViewModels.ExcelReportViewModel",
-                                                        Children = new ObservableCollection<TreeViewModel>
-                                                                   {
-                                                                       new TreeViewModel
-                                                                           {
-                                                                               Title = "Child"
-                                                                           }
-                                                                   }
-                                                    };
-
-                this.NavigateItems = new ObservableCollection<TreeViewModel>
-                                     {
-                                         defaultSelectedNavigation, 
-                                         new TreeViewModel
-                                             {
-                                                 Title = "Text Reports", 
-                                                 ImageSource =
-                                                     "/ExcelReportsGenerator;component/Resources/Images/File-Text-icon.png", 
-                                                 DllKey =
-                                                     "ExcelReportsGenerator.ViewModels.TextReportViewModel"
-                                             }
-                                     };
-
-                var xml = XmlSerialization<Collection<TreeViewModel>>.Serialize(this.NavigateItems);
-                this.SelectedNavigationItem = defaultSelectedNavigation;*/
-
-               // this.NotifyPropertyChanged(() => this.NavigateItems);
             }
             catch (Exception exception)
             {
@@ -232,11 +197,12 @@ namespace ExcelReportsGenerator.ViewModels
 
             set
             {
-                if (this._selectedTabControl == null)
+                /*if (this._selectedTabControl == null)
                 {
                     this._selectedTabControl = this._containerCatalog.ResolveDependencies(value);
-                }
+                }*/
 
+                this._selectedTabControl = value;
                 this.NotifyPropertyChanged();
             }
         }
@@ -348,7 +314,7 @@ namespace ExcelReportsGenerator.ViewModels
                 return;
             }
 
-            shell.ExcelReportGenerator();
+            shell.ReportGenerator();
         }
 
         /// <summary>
@@ -371,8 +337,10 @@ namespace ExcelReportsGenerator.ViewModels
 
             if (tabControlModels.Exists(navItem => navItem.DllKey == this.SelectedNavigationItem.DllKey))
             {
+                // this.SelectedTabControl = tabControlModels.FirstOrDefault(navItem => navItem.DllKey == this.SelectedNavigationItem.DllKey);
                 this.SelectedTabIndex =
                   tabControlModels.FindIndex(navItem => navItem.DllKey == this.SelectedNavigationItem.DllKey);
+              
                 return;
             }
 
@@ -389,8 +357,9 @@ namespace ExcelReportsGenerator.ViewModels
             this.TabControlsObservableCollection.Add(newTabControl);
 
             tabControlModels = this.TabControlsObservableCollection.ToList();
-            this.SelectedTabIndex = tabControlModels.FindLastIndex(navItem => navItem.DllKey == this.SelectedNavigationItem.DllKey);
-        }
+           // this.SelectedTabControl = tabControlModels.FirstOrDefault(navItem => navItem.DllKey == this.SelectedNavigationItem.DllKey);
+            this.SelectedTabIndex = tabControlModels.FindLastIndex(navItem => navItem.DllKey == this.SelectedNavigationItem.DllKey);       
+          }
 
         /// <summary>
         /// Handles the OnCloseTab event of the shellContent control.

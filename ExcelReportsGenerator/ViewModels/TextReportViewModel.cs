@@ -175,7 +175,7 @@ namespace ExcelReportsGenerator.ViewModels
         /// </summary>
         public void ReportGenerator()
         {
-            if (this._dataTable == null)
+           if (this._dataTable == null)
             {
                 return;
             }
@@ -187,7 +187,7 @@ namespace ExcelReportsGenerator.ViewModels
 
             var sheetName = string.Format("Sheet1");
 
-            ExcelOleDbReader.ExportToXlsx(fileName, this._dataTable, sheetName);
+            ExcelWriter.ExportToXlsx(fileName, this._dataTable, sheetName);
 
             Process.Start(fileName);
 

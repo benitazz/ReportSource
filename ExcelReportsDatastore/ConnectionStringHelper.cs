@@ -4,6 +4,7 @@ using System;
 using System.Configuration;
 using System.Data.EntityClient;
 using System.Data.Objects;
+using System.Linq;
 
 #endregion
 
@@ -37,19 +38,6 @@ namespace ExcelReportsDatastore
                 }
             }
 
-            /*var t = ConfigurationManager.AppSettings["connectionStrings"];
-             * 
-             
-
-            var reader = new AppSettingsReader();
-
-
-
-            string myConnectionString = (String)reader.GetValue("ConnectionStrings", String.Empty.GetType());*/
-
-
-           //string str = Properties.Settings.Default.myConnectionString;
-
             var t = System.Configuration.ConfigurationManager.AppSettings["ExcelReportsDatabaseEntities"];
             var connectionString = ConfigurationManager.ConnectionStrings["Context"];
 
@@ -73,7 +61,8 @@ namespace ExcelReportsDatastore
         /// </returns>
         public static string GetConnectionString(ObjectContext context)
         {
-          var databaseEntities = new ExcelReportsDatabaseEntities();
+          /*var t = databaseEntities.ExcelDataTables.FirstOrDefault();
+          t.*/
           
           return ((EntityConnection)context.Connection).StoreConnection.ConnectionString;
         }

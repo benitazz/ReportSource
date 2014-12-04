@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelReportsGenerator", "Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelReportsDatastore", "ExcelReportsDatastore\ExcelReportsDatastore.csproj", "{D3B5B02F-0A17-42E8-A734-A1C5EBA51FD7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelReportsUtils", "ExcelReportsUtils\ExcelReportsUtils.csproj", "{5EA2EC16-4955-478F-9C78-21ED12935FF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{D3B5B02F-0A17-42E8-A734-A1C5EBA51FD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3B5B02F-0A17-42E8-A734-A1C5EBA51FD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3B5B02F-0A17-42E8-A734-A1C5EBA51FD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EA2EC16-4955-478F-9C78-21ED12935FF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EA2EC16-4955-478F-9C78-21ED12935FF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EA2EC16-4955-478F-9C78-21ED12935FF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EA2EC16-4955-478F-9C78-21ED12935FF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

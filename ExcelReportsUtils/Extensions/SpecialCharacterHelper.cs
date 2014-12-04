@@ -8,12 +8,12 @@ using System.Text.RegularExpressions;
 
 #endregion
 
-namespace ExcelReportsDatastore
+namespace ExcelReportsUtils.Extensions
 {
     /// <summary>
     /// The special character helper.
     /// </summary>
-    public static class SpecialCharacterHelper
+    public static class SpecialCharacterRemoverExt
     {
         #region Public Methods and Operators
 
@@ -26,7 +26,7 @@ namespace ExcelReportsDatastore
         /// <returns>
         /// The <see cref="string"/>.
         /// </returns>
-        public static string RemoveSpecialCharacters(this string str)
+        public static string ReplaceSpecialCharaterWithUnderScore(this string str)
         {
             if (string.IsNullOrEmpty(str))
             {
@@ -85,7 +85,20 @@ namespace ExcelReportsDatastore
             }
 
             return Path.GetInvalidFileNameChars().Aggregate(str, (current, c) => current.Replace(c.ToString(CultureInfo.CurrentUICulture), "_"));
+        }
 
+        /// <summary>
+        /// Removes the special characters.
+        /// </summary>
+        /// <param name="str">
+        /// The string.
+        /// </param>
+        /// <returns>
+        /// The <see cref="string"/>.
+        /// </returns>
+        public static string RemoveSpecialCharacters(this string str)
+        {
+            return Regex.Replace(str, "[^a-zA-Z0-9_.]+", "_", RegexOptions.Compiled);
         }
 
         #endregion

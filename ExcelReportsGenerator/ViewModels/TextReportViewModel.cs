@@ -55,7 +55,25 @@ namespace ExcelReportsGenerator.ViewModels
         /// </summary>
         private bool _isBusy;
 
+        /// <summary>
+        /// The _text data
+        /// </summary>
         private DataView _textData;
+
+        /// <summary>
+        /// The _progress text.
+        /// </summary>
+        private string _progressText;
+
+        /// <summary>
+        /// The _progress value.
+        /// </summary>
+        private int _progressValue;
+
+        /// <summary>
+        /// The _is progress bar visible.
+        /// </summary>
+        private bool _isProgressBarVisible;
 
         #endregion
 
@@ -132,6 +150,66 @@ namespace ExcelReportsGenerator.ViewModels
             }
         }
 
+        /// <summary>
+        /// Gets or sets the progress text.
+        /// </summary>
+        /// <value>
+        /// The progress text.
+        /// </value>
+        public string ProgressText
+        {
+            get
+            {
+                return this._progressText;
+            }
+
+            set
+            {
+                this._progressText = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the progress value.
+        /// </summary>
+        /// <value>
+        /// The progress value.
+        /// </value>
+        public int ProgressValue
+        {
+            get
+            {
+                return this._progressValue;
+            }
+
+            set
+            {
+                this._progressValue = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is progress bar visible.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if this instance is progress bar visible; otherwise, <c>false</c>.
+        /// </value>
+        public bool IsProgressBarVisible
+        {
+            get
+            {
+                return this._isProgressBarVisible;
+            }
+
+            set
+            {
+                this._isProgressBarVisible = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+
         #endregion
 
         #region Public Methods and Operators
@@ -162,7 +240,7 @@ namespace ExcelReportsGenerator.ViewModels
 
             if (this._dataFilter != null)
             {
-                var defaultView  = this._dataTable.DefaultView;
+                var defaultView = this._dataTable.DefaultView;
                 defaultView.Sort = "Column1 ASC, Column3 ASC";
                 this.TextData = defaultView;
             }
@@ -175,7 +253,7 @@ namespace ExcelReportsGenerator.ViewModels
         /// </summary>
         public void ReportGenerator()
         {
-           if (this._dataTable == null)
+            if (this._dataTable == null)
             {
                 return;
             }
@@ -187,7 +265,7 @@ namespace ExcelReportsGenerator.ViewModels
 
             var sheetName = string.Format("Sheet1");
 
-            ExcelWriter.ExportToXlsx(fileName, this._dataTable, sheetName);
+            ExcelWriter.ExportToXlsx(this._dataTable, fileName, sheetName);
 
             Process.Start(fileName);
 

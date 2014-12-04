@@ -70,6 +70,7 @@ namespace ExcelReportsDatastore
                     {
                         cmd.Connection = connection;
                         sda.SelectCommand = cmd;
+
                         using (var dataTable = new DataTable())
                         {
                             sda.Fill(dataTable);

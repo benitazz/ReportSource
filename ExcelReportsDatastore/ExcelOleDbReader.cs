@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.OleDb;
 using System.Data.SqlServerCe;
@@ -10,6 +11,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
+using ExcelReportsDatastore.Helpers;
+using ExcelReportsDatastore.Reports.Data;
+
+using ExcelReportsUtils;
+using ExcelReportsUtils.Extensions;
 
 using Microsoft.Office.Interop.Excel;
 
@@ -35,6 +42,26 @@ namespace ExcelReportsDatastore
         /// The total columns.
         /// </summary>
         private static int totalColums;
+
+        /// <summary>
+        /// The _background worker.
+        /// </summary>
+        private static BackgroundWorker backgroundWorker;
+
+        /// <summary>
+        /// The book
+        /// </summary>
+        private static Workbook book;
+        
+        /// <summary>
+        /// The sheet
+        /// </summary>
+        private static Worksheet sheet;
+
+        /// <summary>
+        /// The excel application.
+        /// </summary>
+        private static Application excelApplication;
 
         #endregion
 
@@ -71,7 +98,7 @@ namespace ExcelReportsDatastore
                     continue;
                 }
 
-                columnName = columnName.RemoveSpecialCharacters();
+                columnName = columnName.ReplaceSpecialCharaterWithUnderScore();
 
                 columnName = columnName.Replace(" ", "_");
 
@@ -122,49 +149,34 @@ namespace ExcelReportsDatastore
         /// <param name="filename">
         /// The filename.
         /// </param>
+        /// <param name="background">The background thread.</param>
         /// <returns>
         /// The <see cref="DataView"/>.
         /// </returns>
-        public static DataTable GetExcelDataTable(string filename)
+        public static DataTable GetExcelDataTable(string filename, BackgroundWorker background)
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
+            backgroundWorker = background;
 
-            // var data = ExcelOpenXmlReader.ReadExcelFile(filename);
-            stopWatch.Stop();
+            backgroundWorker.DoWork += BackgroundWorkerDoWork;
 
-            // Get the elapsed time as a TimeSpan value.
-            TimeSpan ts = stopWatch.Elapsed;
+            background.RunWorkerAsync(filename);
 
-            // Format and display the TimeSpan value.
-            string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}", 
-                ts.Hours, 
-                ts.Minutes, 
-                ts.Seconds, 
-                ts.Milliseconds / 10);
+            return null;
 
-            // return data;
-
-            /*var dissectQuery = string.Format("select top 10000 * from ExcelDataTable");
-
-            using (var connection = GetLocalConnection())
-            {
-                return DatabaseReader.GetDatabaseDataTable(connection, dissectQuery);
-            }*/
-            return SaveCsvFileToDataBase(filename);
+            // return LoadExcelDataToDatabase(filename);
 
             // SaveFileToDatabase(filename);
-            var sheet1 = new DataTable();
+            /*var sheet1 = new DataTable();
             var csbuilder = new OleDbConnectionStringBuilder
                                 {
                                     Provider = "Microsoft.ACE.OLEDB.12.0", 
                                     DataSource = filename
                                 };
-            csbuilder.Add("Extended Properties", "Excel 12.0 Xml;HDR=YES");
+            csbuilder.Add("Extended Properties", "Excel 12.0 Xml;HDR=YES");*/
 
             /* var connect =
               "Provider=Microsoft.ACE.OLEDB.12.0; Data Source= {0}; Extended Properties=\"Excel 12.0;IMEX=1;HDR=YES;TypeGuessRows=0;ImportMixedTypes=Text\"";*/
-            var connectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + filename
+            /*var connectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + filename
                                    + ";Extended Properties=\"Excel 12.0;HDR=YES;IMEX=1;ImportMixedTypes=Text;TypeGuessRows=0\"";
 
             using (var connection = new OleDbConnection(connectionString))
@@ -190,7 +202,7 @@ namespace ExcelReportsDatastore
             {
                 foreach (DataColumn col in sheet1.Columns)
                 {
-                    if (col.ColumnName == "colName")
+                    if (col.ColumnNameFilter == "colName")
                     {
                         dr[col] = dr[col].ToString().Replace(" ", string.Empty);
                     }
@@ -200,7 +212,29 @@ namespace ExcelReportsDatastore
                     }
                 }
             }*/
-            return sheet1;
+
+            // return sheet1;
+        }
+
+        /// <summary>
+        /// Handles the DoWork event of the backgroundWorker control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="DoWorkEventArgs"/> instance containing the event data.</param>
+        public static void BackgroundWorkerDoWork(object sender, DoWorkEventArgs e)
+        {
+            var dissectHelper = e.Argument as IReportData;
+
+            if (dissectHelper != null)
+            {
+                backgroundWorker.ReportProgress(1);
+                ExcelWriter.Dissect(dissectHelper);
+                e.Result = dissectHelper;
+                return;
+            }
+
+            var filename = e.Argument.ToString();
+          // e.Result = LoadExcelDataToDatabase(filename);
         }
 
         /// <summary>
@@ -212,12 +246,12 @@ namespace ExcelReportsDatastore
         /// <exception cref="System.Exception">Could not create a connection to the local database</exception>
         public static SqlCeConnection GetLocalConnection()
         {
-            const string DatabaseConnectionString =
-                @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";
+            /*const string DatabaseConnectionString =
+                @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";*/
 
             try
             {
-                return new SqlCeConnection(DatabaseConnectionString);
+                return new SqlCeConnection(ConnectionStringHelper.ExcelDatabaseConnectionString);
             }
             catch (Exception exception)
             {
@@ -265,33 +299,26 @@ namespace ExcelReportsDatastore
         }
 
         /// <summary>
-        /// Saves the CSV file to data base.
+        /// Loads the excel data to database.
         /// </summary>
-        /// <param name="filePath">
-        /// The file path.
-        /// </param>
+        /// <param name="filePath">The file path.</param>
+        /// <param name="background">The background.</param>
         /// <returns>
-        /// The <see cref="DataTable"/>.
+        /// Returns data table.
         /// </returns>
-        public static DataTable SaveCsvFileToDataBase(string filePath)
+        /// <exception cref="System.Exception"></exception>
+        public static DataTable LoadExcelDataToDatabase(string filePath, BackgroundWorker background)
         {
+            backgroundWorker = background;
+            backgroundWorker.ReportProgress(1);
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var app = new Application { Visible = false, ScreenUpdating = false, DisplayAlerts = false };
+            excelApplication = new Application { Visible = false, ScreenUpdating = false, DisplayAlerts = false };
 
-            Workbook book = null;
-
-            // the reference to the worksheet,
-            // we'll assume the first sheet in the book.
-            Worksheet sheet = null;
-            Range range = null;
-
-            // the range object is used to hold the data
-            // we'll be reading from and to find the range of data.
             try
             {
-                book = app.Workbooks.Open(
+                book = excelApplication.Workbooks.Open(
                     filePath, 
                     Missing.Value, 
                     Missing.Value, 
@@ -317,19 +344,31 @@ namespace ExcelReportsDatastore
 
                 book.SaveAs(TempOutputFile, XlFileFormat.xlCurrentPlatformText);
                 book.Close(false);
-                app.Quit();
+                excelApplication.Quit();
+                book = null;
+                excelApplication = null;
+               
+                // @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";
 
-                const string DatabaseConnectionString =
-                    @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";
-
-                using (var sqlCeConnection = new SqlCeConnection(DatabaseConnectionString))
+                using (var sqlCeConnection = new SqlCeConnection(ConnectionStringHelper.ExcelDatabaseConnectionString))
                 {
-                    sqlCeConnection.Open();
+                    try
+                    {
+                        if (sqlCeConnection.State == ConnectionState.Closed)
+                        {
+                            sqlCeConnection.Open();
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        // engine.Repair(null, RepairOption.DeleteCorruptedRows);
+                        Console.WriteLine(exception);
+                    }
 
                     StoreDataCsvToDatabase(sqlCeConnection, TempOutputFile, filePath);
                 }
 
-                stopWatch.Stop();
+               stopWatch.Stop();
 
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
@@ -343,10 +382,11 @@ namespace ExcelReportsDatastore
 
                 var dissectQuery = string.Format("select top 10000 * from ExcelDataTable");
 
-                const string DatabaseConnectionString2 =
-                    @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";
+               /* string DatabaseConnectionString2 = ConnectionStringHelper.GetConnectionString();*/
 
-                using (var sqlCeConnection = new SqlCeConnection(DatabaseConnectionString2))
+                    // @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";
+
+                using (var sqlCeConnection = new SqlCeConnection(ConnectionStringHelper.ExcelDatabaseConnectionString))
                 {
                     sqlCeConnection.Open();
 
@@ -358,9 +398,9 @@ namespace ExcelReportsDatastore
                 throw new Exception(exception.Message);
             }
 
-            /*finally
+            finally
             {
-                /*range = null;
+                //range = null;
                 sheet = null;
                 if (book != null)
                 {
@@ -369,15 +409,14 @@ namespace ExcelReportsDatastore
 
                 book = null;
 
-                if (app != null)
+                if (excelApplication != null)
                 {
-                    app.Quit();
+                    excelApplication.Quit();
                 }
 
-                app = null;*/
-            // SqlCeConnection.
-            // }   
-        }
+                excelApplication = null;
+            }
+         }
 
         /// <summary>
         /// Saves the file to database.
@@ -387,17 +426,16 @@ namespace ExcelReportsDatastore
         /// </param>
         public static void SaveFileToDatabase(string filePath)
         {
-            // var test = ConnectionStringHelper.GetConnectionString();
-            var excelConnString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + filePath
+           var excelConnString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + filePath
                                   + ";Extended Properties=\"Excel 12.0;HDR=YES;IMEX=1;ImportMixedTypes=Text;TypeGuessRows=0\"";
 
             // string connectionString = @"Data Source=(LocalDb)\v11.0;Initial Catalog=ExcelReportsDb;Integrated Security=True; MultipleActiveResultSets=True";
-            const string DatabaseConnectionString =
-                @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";
+            /*const string DatabaseConnectionString =
+                @"Data Source=C:\Users\bbdnet1087\Documents\Visual Studio 2012\Projects\ExcelReportsGenerator\ExcelReportsDatastore\ExcelReportsDatabase.sdf;Max Database Size=4091;Max Buffer Size=4091;Persist Security Info=False;";*/
 
             try
             {
-                using (var sqlCeConnection = new SqlCeConnection(DatabaseConnectionString))
+                using (var sqlCeConnection = new SqlCeConnection(ConnectionStringHelper.ExcelDatabaseConnectionString))
                 {
                     sqlCeConnection.Open();
 
@@ -505,7 +543,7 @@ namespace ExcelReportsDatastore
         /// <param name="tableName">
         /// Name of the table.
         /// </param>
-        private static void DropTable(SqlCeConnection sqlCeConnection, string tableName)
+        public static void DropTable(SqlCeConnection sqlCeConnection, string tableName)
         {
             var dt = sqlCeConnection.GetSchema("tables");
 
@@ -549,65 +587,22 @@ namespace ExcelReportsDatastore
         /// <summary>
         /// Gets the index of the excel row values by.
         /// </summary>
-        /// <param name="excelFilePath">
-        /// The excel file path.
-        /// </param>
-        /// <param name="rowIndex">
-        /// Index of the row.
-        /// </param>
-        /// <param name="record">
-        /// The record.
-        /// </param>
-        /// <param name="totalColumns">
-        /// total number of columns.
-        /// </param>
-        /// <exception cref="System.Exception">
-        /// </exception>
+        /// <param name="worksheet">The worksheet.</param>
+        /// <param name="rowIndex">Index of the row.</param>
+        /// <param name="record">The record.</param>
+        /// <param name="totalColumns">The total columns.</param>
         private static void GetExcelRowValuesByIndex(
-            string excelFilePath, 
-            int rowIndex, 
-            SqlCeUpdatableRecord record, 
+            Worksheet worksheet,
+            int rowIndex,
+            SqlCeUpdatableRecord record,
             int totalColumns)
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            var app = new Application { Visible = false, ScreenUpdating = false, DisplayAlerts = false };
-            Workbook book = null;
-
-            // the reference to the worksheet,
-            // we'll assume the first sheet in the book.
-            Worksheet sheet = null;
-
-            Range range = null;
-
-            // the range object is used to hold the data
-            // we'll be reading from and to find the range of data.
             try
             {
-                book = app.Workbooks.Open(
-                    excelFilePath, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value, 
-                    Missing.Value);
-
-                sheet = (Worksheet)book.Worksheets[1];
-
                 var startCellRange = string.Format("A{0}", rowIndex);
                 var endCellRange = string.Format("{0}{1}", GetExcelColumnName(totalColumns), rowIndex);
 
-                range = sheet.Range[startCellRange, endCellRange];
+                Range range = worksheet.Range[startCellRange, endCellRange];
 
                 int columnCount = range.Columns.Count;
 
@@ -628,25 +623,88 @@ namespace ExcelReportsDatastore
             {
                 throw new Exception(exception.Message);
             }
-            finally
-            {
-                range = null;
-                sheet = null;
-                if (book != null)
-                {
-                    book.Close(false, Missing.Value, Missing.Value);
-                }
-
-                book = null;
-
-                if (app != null)
-                {
-                    app.Quit();
-                }
-
-                app = null;
-            }
         }
+
+        /// <summary>
+        /// Gets the index of the excel row values by.
+        /// </summary>
+        /// <param name="excelFilePath">
+        /// The excel file path.
+        /// </param>
+        /// <param name="rowIndex">
+        /// Index of the row.
+        /// </param>
+        /// <param name="record">
+        /// The record.
+        /// </param>
+        /// <param name="totalColumns">
+        /// total number of columns.
+        /// </param>
+        /// <exception cref="System.Exception">
+        /// </exception>
+        private static void GetExcelRowValuesByIndex(
+            string excelFilePath, 
+            int rowIndex, 
+            SqlCeUpdatableRecord record, 
+            int totalColumns)
+        {
+            if (excelApplication == null)
+            {
+                excelApplication = new Application { Visible = false, ScreenUpdating = false, DisplayAlerts = false };
+            }
+
+            try
+            {
+                if (book == null)
+                {
+                    book = excelApplication.Workbooks.Open(
+                        excelFilePath,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value,
+                        Missing.Value);        
+                }
+
+                if (sheet == null)
+                {
+                    sheet = (Worksheet)book.Worksheets[1];
+                }
+
+                var startCellRange = string.Format("A{0}", rowIndex);
+                var endCellRange = string.Format("{0}{1}", GetExcelColumnName(totalColumns), rowIndex);
+
+                Range range = sheet.Range[startCellRange, endCellRange];
+
+                int columnCount = range.Columns.Count;
+
+                var values = (object[,])range.Value2;
+
+                var recordIndex = 0;
+
+                for (int i = 1; i <= columnCount; i++)
+                {
+                    var val = values[1, i];
+
+                    record.SetValue(recordIndex, val != null ? val.ToString() : null);
+
+                    recordIndex++;
+                }
+            }
+            catch (Exception exception)
+            {
+                throw new Exception(exception.Message);
+            }
+         }
 
         /// <summary>
         /// Gets the name of the sheet.
@@ -730,7 +788,7 @@ namespace ExcelReportsDatastore
         /// </param>
         private static void StoreDataCsvToDatabase(SqlCeConnection sqlCeConnection, string filePath, string excelPath)
         {
-            if (sqlCeConnection.State == ConnectionState.Closed)
+          if (sqlCeConnection.State == ConnectionState.Closed)
             {
                 sqlCeConnection.Open();
             }
@@ -772,9 +830,12 @@ namespace ExcelReportsDatastore
                     {
                         var rowCount = 0;
 
-                        while (!reader.EndOfStream)
+                       while (!reader.EndOfStream)
                         {
                             string message = reader.ReadLine();
+
+                            /*var percentComplete = (int)(rowCount / (float)tolalColumns * 100);
+                            backgroundWorker.ReportProgress(percentComplete);*/
 
                             if (message == null || rowCount == 0)
                             {
@@ -798,8 +859,9 @@ namespace ExcelReportsDatastore
                                 if (list.Count != extraColumnCount && !string.IsNullOrEmpty(list[tolalColumns]))
                                 {
                                     ++rowCount;
-                                    GetExcelRowValuesByIndex(excelPath, rowCount, record, tolalColumns);
 
+                                    GetExcelRowValuesByIndex(excelPath, rowCount, record, tolalColumns);
+                                    
                                     rs.Insert(record);
                                     continue;
                                 }
@@ -833,20 +895,15 @@ namespace ExcelReportsDatastore
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var app = new Application { Visible = false, ScreenUpdating = false, DisplayAlerts = false };
-            Workbook book = null;
-
-            // the reference to the worksheet,
-            // we'll assume the first sheet in the book.
-            Worksheet sheet = null;
-
+            excelApplication = new Application { Visible = false, ScreenUpdating = false, DisplayAlerts = false };
+            
             Range range = null;
 
             // the range object is used to hold the data
             // we'll be reading from and to find the range of data.
             try
             {
-                book = app.Workbooks.Open(
+                book = excelApplication.Workbooks.Open(
                     excelFilePath, 
                     Missing.Value, 
                     Missing.Value, 
@@ -930,12 +987,12 @@ namespace ExcelReportsDatastore
 
                 book = null;
 
-                if (app != null)
+                if (excelApplication != null)
                 {
-                    app.Quit();
+                    excelApplication.Quit();
                 }
 
-                app = null;
+                excelApplication = null;
             }
         }
 

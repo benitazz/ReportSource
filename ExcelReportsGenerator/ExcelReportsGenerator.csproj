@@ -202,7 +202,10 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="app.config" />
+    <Content Include="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -253,7 +256,7 @@
     <Resource Include="Resources\Images\Windows8Loader.gif" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\mi_scare_report.ico" />
+    <Resource Include="Resources\Images\mi_scare_report.ico" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Images\Report.jpg" />
@@ -271,6 +274,10 @@
     <ProjectReference Include="..\ExcelReportsDatastore\ExcelReportsDatastore.csproj">
       <Project>{d3b5b02f-0a17-42e8-a734-a1c5eba51fd7}</Project>
       <Name>ExcelReportsDatastore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ExcelReportsUtils\ExcelReportsUtils.csproj">
+      <Project>{5ea2ec16-4955-478f-9c78-21ed12935ff0}</Project>
+      <Name>ExcelReportsUtils</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

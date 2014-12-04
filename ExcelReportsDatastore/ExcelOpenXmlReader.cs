@@ -80,21 +80,73 @@ namespace ExcelReportsDatastore
         public static string GetColumnName(string cellReference)
         {
             // Create a regular expression to match the column name portion of the cell name.
-            Regex regex = new Regex("[A-Za-z]+");
+            var regex = new Regex("[A-Za-z]+");
             Match match = regex.Match(cellReference);
             return match.Value;
         }
 
         /// <summary>
-        /// Reads the excel file and store the data to the local database.
+        /// Reads the excel row and stores the results into the database record.
         /// </summary>
-        /// <param name="fileName">
-        /// Name of the file.
-        /// </param>
-        /// <returns>
-        /// Returns database data using data table.
-        /// </returns>
-        public static DataTable ReadExcelFile(string fileName)
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="rowIndex">Index of the row.</param>
+        /// <param name="record">The record.</param>
+        public static void ReadExcelRow(string fileName, uint rowIndex, SqlCeUpdatableRecord record)
+        {
+            try
+            {
+                // Open the file. You can pass 'false', if you just need to open the file for reading.
+                using (var spreadsheetDocument = SpreadsheetDocument.Open(fileName, false))
+                {
+                    WorkbookPart workbookPart = spreadsheetDocument.WorkbookPart;
+                    
+                    var stopWatch = new Stopwatch();
+                    stopWatch.Start();
+
+                    foreach (Sheet sheet in workbookPart.Workbook.Descendants<Sheet>())
+                    {
+                        var worksheetPart = workbookPart.GetPartById(sheet.Id) as WorksheetPart;
+
+                        sharedStringItems =
+                            workbookPart.SharedStringTablePart.SharedStringTable.Elements<SharedStringItem>()
+                                .ToArray<SharedStringItem>();
+
+                        if (worksheetPart != null)
+                        {
+                          var row = GetRow(worksheetPart.Worksheet, rowIndex);
+
+                            if (row == null)
+                            {
+                                return;
+                            }
+
+                            var cells = row.Descendants<Cell>().ToArray();
+
+                            InsertRecords(cells, record);
+                        }
+
+                        break;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                throw new Exception(exception.Message);
+            }
+        }
+
+
+        /// <summary>
+                /// Reads the excel file and store the data to the local database.
+                /// </summary>
+                /// <param name="fileName">
+                /// Name of the file.
+                /// </param>
+                /// <returns>
+                /// Returns database data using data table.
+                /// </returns>
+            public static
+            DataTable ReadExcelFile(string fileName)
         {
             var localDatabaseConnection = ExcelOleDbReader.GetLocalConnection();
             localDatabaseConnection.Open();
@@ -312,46 +364,58 @@ namespace ExcelReportsDatastore
                 {
                     SqlCeUpdatableRecord record = databaseRecord.CreateRecord();
 
-                    var cellIndex = 1;
-
-                    foreach (var tempCell in cells)
-                    {
-                        var columnIndexFromName = GetColumnIndexFromName(GetColumnName(tempCell.CellReference));
-
-                        if (columnIndexFromName != null)
-                        {
-                            var cellColumnIndex = (int)columnIndexFromName;
-                            cellColumnIndex--; // zero based index
-
-                            while (cellIndex < cellColumnIndex)
-                            {
-                                /* if (cellIndex > totalColumns)
-                                {
-                                    // Ignore data outside the boundary of columns.
-                                    break;
-                                }*/
-
-                                // Insert blank data here;
-                                record.SetValue(cellIndex, null);
-                                cellIndex++;
-                            }
-                        }
-
-                        /*if (cellIndex > totalColumns)
-                        {
-                            // Ignore data outside the boundary of columns.
-                            continue;
-                        }*/
-                        var cellValue = GetCellValue(tempCell);
-
-                        record.SetValue(cellIndex, cellValue);
-                        cellIndex++;
-                    }
+                    InsertRecords(cells, record);
 
                     databaseRecord.Insert(record);
                 }
             }
         }
+
+        /// <summary>
+        /// Inserts the records.
+        /// </summary>
+        /// <param name="cells">The cells.</param>
+        /// <param name="record">The record.</param>
+        private static void InsertRecords(IEnumerable<Cell> cells, SqlCeUpdatableRecord record)
+        {
+            var cellIndex = 1;
+
+            foreach (var tempCell in cells)
+            {
+                var columnIndexFromName = GetColumnIndexFromName(GetColumnName(tempCell.CellReference));
+
+                if (columnIndexFromName != null)
+                {
+                    var cellColumnIndex = (int)columnIndexFromName;
+                    cellColumnIndex--; // zero based index
+
+                    while (cellIndex < cellColumnIndex)
+                    {
+                       // Insert blank data here;
+                        record.SetValue(cellIndex, null);
+                        cellIndex++;
+                    }
+                }
+
+                var cellValue = GetCellValue(tempCell);
+
+                record.SetValue(cellIndex, cellValue);
+                cellIndex++;
+            }
+        }
+
+        /// <summary>
+        /// Gets the row from excel.
+        /// </summary>
+        /// <param name="worksheet">The worksheet.</param>
+        /// <param name="rowIndex">Index of the row.</param>
+        /// <returns>
+        /// Given a worksheet and a row index, return the row.
+        /// </returns>
+        private static Row GetRow(Worksheet worksheet, uint rowIndex)
+        {
+            return worksheet.GetFirstChild<SheetData>().Elements<Row>().First(r => r.RowIndex == rowIndex);
+        } 
 
         #endregion
     }

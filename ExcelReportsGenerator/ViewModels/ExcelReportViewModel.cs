@@ -3,19 +3,24 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
 using BenMVVM;
 
-using ExcelReportsDatastore;
+using ExcelReportsDatastore.Common;
+using ExcelReportsDatastore.Factories;
+using ExcelReportsDatastore.Reports.Data;
 
 using ExcelReportsGenerator.Common;
 using ExcelReportsGenerator.Common.Helpers;
+
+using ExcelReportsUtils;
+using ExcelReportsUtils.Extensions;
 
 using Microsoft.Win32;
 
@@ -29,6 +34,16 @@ namespace ExcelReportsGenerator.ViewModels
     public class ExcelReportViewModel : ViewModelBase, IShellViewModel
     {
         #region Fields
+
+        /// <summary>
+        /// The _report generator worker
+        /// </summary>
+        private BackgroundWorker _reportGeneratorWorker;
+
+        /// <summary>
+        /// The _background worker.
+        /// </summary>
+        private BackgroundWorker _reportLoaderWorker;
 
         /// <summary>
         ///   The _columns names list
@@ -59,6 +74,26 @@ namespace ExcelReportsGenerator.ViewModels
         ///   The _is column filter enabled
         /// </summary>
         private bool _isColumnFilterEnabled;
+
+        /// <summary>
+        /// The _is progress bar visible
+        /// </summary>
+        private bool _isProgressBarVisible;
+
+        /// <summary>
+        /// The _progress text
+        /// </summary>
+        private string _progressText;
+
+        /// <summary>
+        /// The _progress value
+        /// </summary>
+        private int _progressValue;
+
+        /// <summary>
+        /// The _report data
+        /// </summary>
+        private IReportData _reportData;
 
         /// <summary>
         ///   The _selected column filter
@@ -227,6 +262,66 @@ namespace ExcelReportsGenerator.ViewModels
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether this instance is progress bar visible.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if this instance is progress bar visible; otherwise, <c>false</c>.
+        /// </value>
+        public bool IsProgressBarVisible
+        {
+            get
+            {
+                return this._isProgressBarVisible;
+            }
+
+            set
+            {
+                this._isProgressBarVisible = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the progress text.
+        /// </summary>
+        /// <value>
+        /// The progress text.
+        /// </value>
+        public string ProgressText
+        {
+            get
+            {
+                return this._progressText;
+            }
+
+            set
+            {
+                this._progressText = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the progress value.
+        /// </summary>
+        /// <value>
+        /// The progress value.
+        /// </value>
+        public int ProgressValue
+        {
+            get
+            {
+                return this._progressValue;
+            }
+
+            set
+            {
+                this._progressValue = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+
+        /// <summary>
         ///   Gets or sets the selected column.
         /// </summary>
         /// <value>
@@ -343,6 +438,83 @@ namespace ExcelReportsGenerator.ViewModels
         #region Public Methods and Operators
 
         /// <summary>
+        ///   Files the browser handler.
+        /// </summary>
+        public void FileBrowserHandler()
+        {
+            try
+            {
+                this.IsBusy = true;
+                this.ProgressText = string.Empty;
+                this.IsProgressBarVisible = false;
+
+                var fileDialog = new OpenFileDialog
+                                     {
+                                         Filter =
+                                             "Excel Files (*.xls, *.xlsx)|*.xls;*.xlsx;*.txt|All Files(*.*)|*.*"
+                                     };
+
+                this.FileName = FileBrowserHelper.GetfileName(fileDialog);
+
+                if (string.IsNullOrEmpty(this.FileName))
+                {
+                    this.IsBusy = false;
+                    return;
+                }
+
+                var fileExtension = Path.GetExtension(this.FileName);
+
+                var filename = Path.GetFileName(this.FileName);
+
+                this.ProgressText = string.Format("Loading Data From {0}...", filename);
+
+                this._reportLoaderWorker = new BackgroundWorker();
+                this._reportLoaderWorker.DoWork += this.ReportLoaderWorkerOnDoWork;
+                this._reportLoaderWorker.RunWorkerCompleted += this.ReportLoaderWorkerRunWorkerCompleted;
+                this._reportLoaderWorker.ProgressChanged += this.ReportLoaderWorkerProgressChanged;
+                this._reportLoaderWorker.WorkerReportsProgress = true;
+                this._reportLoaderWorker.WorkerSupportsCancellation = true;
+
+                if (fileExtension.Contains(".xl"))
+                {
+                    // this._reportLoaderWorker.RunWorkerAsync(this.FileName);
+                    // ExcelOleDbReader.GetExcelDataTable(this.FileName, this._reportLoaderWorker);
+
+                    this._reportData = new ReportData { FileName = this.FileName, };
+
+                    this._reportLoaderWorker.RunWorkerAsync(this._reportData);
+
+                    /*this._excelSheetDataTable = ExcelOleDbReader.GetExcelDataTable(this.FileName);
+
+                    this.ExcelData = this._excelSheetDataTable.DefaultView;*/
+
+                    /*this.TotalRecords = this.ExcelData.Count;
+
+                    this.ColumnsNamesList = new ObservableCollection<string>();
+
+                    foreach (DataColumn column in this._excelSheetDataTable.Columns)
+                    {
+                        this.ColumnsNamesList.Add(column.ColumnNameFilter);
+                    }
+
+                    this.NotifyPropertyChanged(() => this.ColumnsNamesList);
+                    this.IsColumnFilterEnabled = false;*/
+
+                    /*this.Sheets = ExcelOleDbReader.GetSheetNames();
+
+                    this.SelectedSheet = this.Sheets[0];*/
+                    // this.SelectedColumnFilter = "Quantity";
+                }
+            }
+            catch (Exception exception)
+            {
+                Dialogs.ShowError(exception);
+            }
+
+            this.IsBusy = false;
+        }
+
+        /// <summary>
         ///   Quantities the report.
         /// </summary>
         public void ReportGenerator()
@@ -355,6 +527,13 @@ namespace ExcelReportsGenerator.ViewModels
             this.IsBusy = true;
             DataTable results = this._excelSheetDataTable.Copy();
             results.Rows.Clear();
+
+            this._reportGeneratorWorker = new BackgroundWorker();
+            this._reportGeneratorWorker.DoWork += this.ReportGeneratorWorkerOnDoWork;
+            this._reportGeneratorWorker.RunWorkerCompleted += this.ReportGeneratorWorkerRunWorkerCompleted;
+            this._reportGeneratorWorker.ProgressChanged += this.ReportGeneratorWorkerOnProgressChanged;
+            this._reportGeneratorWorker.WorkerReportsProgress = true;
+            this._reportGeneratorWorker.WorkerSupportsCancellation = true;
 
             switch (this.SelectedExcelReport)
             {
@@ -380,58 +559,87 @@ namespace ExcelReportsGenerator.ViewModels
         }
 
         /// <summary>
-        ///   Files the browser handler.
+        /// Handles the ProgressChanged event of the _reportLoaderWorker control.
         /// </summary>
-        public void FileBrowserHandler()
+        /// <param name="sender">
+        /// The source of the event.
+        /// </param>
+        /// <param name="e">
+        /// The <see cref="ProgressChangedEventArgs"/> instance containing the event data.
+        /// </param>
+        /// <exception cref="System.NotImplementedException">
+        /// </exception>
+        public void ReportLoaderWorkerProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            try
+            this.IsBusy = true;
+
+            /*if (!this.IsProgressBarVisible)
             {
-                this.IsBusy = true;
-
-                var fileDialog = new OpenFileDialog
-                                   {
-                                       Filter =
-                                         "Excel Files (*.xls, *.xlsx)|*.xls;*.xlsx;*.txt|All Files(*.*)|*.*"
-                                   };
-
-                this.FileName = FileBrowserHelper.GetfileName(fileDialog);
-
-                if (string.IsNullOrEmpty(this.FileName))
-                {
-                    this.IsBusy = false;
-                    return;
-                }
-
-                var fileExtension = Path.GetExtension(this.FileName);
-
-                if (fileExtension.Contains(".xl"))
-                {
-                    this._excelSheetDataTable = ExcelOleDbReader.GetExcelDataTable(this.FileName);
-
-                    this.ExcelData = this._excelSheetDataTable.DefaultView;
-
-                    this.TotalRecords = this.ExcelData.Count;
-
-                    this.ColumnsNamesList = new ObservableCollection<string>();
-
-                    foreach (DataColumn column in this._excelSheetDataTable.Columns)
-                    {
-                        this.ColumnsNamesList.Add(column.ColumnName);
-                    }
-
-                    this.NotifyPropertyChanged(() => this.ColumnsNamesList);
-                    this.IsColumnFilterEnabled = false;
-
-                    /*this.Sheets = ExcelOleDbReader.GetSheetNames();
-
-                    this.SelectedSheet = this.Sheets[0];*/
-                    this.SelectedColumnFilter = "Quantity";
-                }
+                this.IsProgressBarVisible = true;
             }
-            catch (Exception exception)
+
+            this.ProgressValue = e.ProgressPercentage;
+
+            this.NotifyPropertyChanged(() => this.ProgressValue);*/
+
+            // Thread.Sleep(5);
+        }
+
+        /// <summary>
+        /// Handles the RunWorkerCompleted event of the _reportLoaderWorker control.
+        /// </summary>
+        /// <param name="sender">
+        /// The source of the event.
+        /// </param>
+        /// <param name="e">
+        /// The <see cref="RunWorkerCompletedEventArgs"/> instance containing the event data.
+        /// </param>
+        /// <exception cref="System.NotImplementedException">
+        /// </exception>
+        public void ReportLoaderWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
             {
-                MessageBox.Show(exception.ToString());
+                this.IsBusy = false;
+                return;
             }
+
+            if (e.Error != null)
+            {
+                MessageBox.Show("Error while performing the data load", "Data Load");
+                this.IsBusy = false;
+                return;
+            }
+
+            var dissectHelper = e.Result as IReportData;
+
+            if (dissectHelper != null)
+            {
+                Process.Start(dissectHelper.Directory);
+                this.IsBusy = false;
+                return;
+            }
+
+            var dataTable = e.Result as DataTable;
+
+            if (dataTable == null)
+            {
+                return;
+            }
+
+            this._excelSheetDataTable = dataTable;
+            this.ExcelData = this._excelSheetDataTable.DefaultView;
+            this.TotalRecords = this.ExcelData.Count;
+
+            this.ColumnsNamesList = new ObservableCollection<string>();
+
+            foreach (DataColumn column in this._excelSheetDataTable.Columns)
+            {
+                this.ColumnsNamesList.Add(column.ColumnName);
+            }
+
+            this.NotifyPropertyChanged(() => this.ColumnsNamesList);
+            this.IsColumnFilterEnabled = false;
 
             this.IsBusy = false;
         }
@@ -441,22 +649,6 @@ namespace ExcelReportsGenerator.ViewModels
         #region Methods
 
         /// <summary>
-        /// Adds the row to data table.
-        /// </summary>
-        /// <param name="results">
-        /// The results.
-        /// </param>
-        /// <param name="row">
-        /// The row.
-        /// </param>
-        private static void AddRowToDatatable(DataTable results, DataRow row)
-        {
-            var newRow = results.NewRow();
-            newRow.ItemArray = row.ItemArray;
-            results.Rows.Add(newRow);
-        }
-
-        /// <summary>
         /// Excels the dissect report generator.
         /// </summary>
         /// <param name="results">
@@ -464,78 +656,33 @@ namespace ExcelReportsGenerator.ViewModels
         /// </param>
         private void ExcelDissectReportGenerator(DataTable results)
         {
+            if (string.IsNullOrEmpty(this.SelectedColumnFilter))
+            {
+                Dialogs.ShowWarning("Please select a column to be used for dissecting.");
+                return;
+            }
+
             var fileName = Path.GetFileNameWithoutExtension(this.FileName);
 
-            fileName = this.RemoveSpecialCharacters(fileName);
+            fileName = fileName.RemoveSpecialCharacters();
 
             var datetime = DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss-tt");
 
             var directoryName = string.Format(@"C:\Dissect\{0} {1}", fileName, datetime);
 
-           FileBrowserHelper.CreateDirectory(directoryName);
-           // Directory.SetCreationTime(directoryName, DateTime.Now);
-           
+            FileBrowserHelper.CreateDirectory(directoryName);
 
-            ExcelWriter.DissectRecords(this.SelectedColumnFilter, string.Empty, this.FileName, directoryName);
+            this._reportData = new ReportData
+                                   {
+                                       ColumnNameFilter = this.SelectedColumnFilter, 
+                                       FileName = this.FileName, 
+                                       Directory = directoryName, 
+                                       ReportGeneratorType = ReportGeneratorType.DissectData
+                                   };
 
-            /*var view = new DataView(this._excelSheetDataTable);
-            DataTable distinctValues = view.ToTable(true, this.SelectedColumnFilter);
+            this.ProgressText = string.Format("Dissecting Data using {0}...", this.SelectedColumnFilter);
 
-            //var directoryName = string.Empty;
-
-            foreach (DataRow row in distinctValues.Rows)
-            {
-                var value = row[this.SelectedColumnFilter];
-
-                var newValue = @value.ToString().Replace("'", "''");
-
-                var expression = string.Format("[{0}] = '{1}'", this.SelectedColumnFilter, newValue);
-
-                DataRow[] filteredRows = this._excelSheetDataTable.Select(expression);
-
-                foreach (var filteredRow in filteredRows)
-                {
-                    AddRowToDatatable(results, filteredRow);
-                }
-
-                var dissectColumnName = value.ToString().Trim();
-
-                dissectColumnName = this.RemoveSpecialCharacters(dissectColumnName);
-
-                var filename = string.Format(@"{0}\{1}_{2}", directoryName, dissectColumnName, Path.GetFileName(this.FileName));
-
-                ExcelWriter.ExportToXlsx(filename, results, value.ToString());
-
-                results.Rows.Clear();
-            }*/
-
-            // opens the folder in explorer
-            Process.Start(directoryName);
-
-            // opens the folder in explorer
-            // Process.Start("explorer.exe", @"c:\temp");
-        }
-
-        /// <summary>
-        /// Removes the special characters.
-        /// </summary>
-        /// <param name="str">The string.</param>
-        /// <returns></returns>
-        private string RemoveSpecialCharacters(string str)
-        {
-            return Regex.Replace(str, "[^a-zA-Z0-9_.]+", "_", RegexOptions.Compiled);
-
-            /*var sb = new StringBuilder();
-
-            foreach (char c in str)
-            {
-                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_')
-                {
-                    sb.Append(c);
-                }
-            }
-
-            return sb.ToString();*/
+            this._reportGeneratorWorker.RunWorkerAsync(this._reportData);
         }
 
         /// <summary>
@@ -546,7 +693,7 @@ namespace ExcelReportsGenerator.ViewModels
         /// </param>
         private void ExcelReplicateReportGenerator(DataTable results)
         {
-            var index = 0;
+            /*var index = 0;
 
             foreach (DataRow row in this._excelSheetDataTable.Rows)
             {
@@ -570,17 +717,142 @@ namespace ExcelReportsGenerator.ViewModels
                 {
                     AddRowToDatatable(results, row);
                 }
+            }*/
+            this.ProgressText = string.Empty;
+
+            if (string.IsNullOrEmpty(this.SelectedColumnFilter))
+            {
+                Dialogs.ShowWarning("Please select the column name to be used for filtering data.");
+                return;
             }
 
-            // var fileName = string.Format("{0}_{1}", DateTime.Now, Path.GetFileName(this.FileName));
+            this.ProgressText = string.Format("Replicating Data using {0}...", this.SelectedColumnFilter);
+
+            this._reportData = new ReportData
+                                   {
+                                       ColumnNameFilter = this.SelectedColumnFilter, 
+                                       FileName = @"c:\test.xlsx", 
+                                       ReportGeneratorType = ReportGeneratorType.ReplicateData, 
+                                       SheetName = string.Format("Replicated_{0}", this.SelectedColumnFilter)
+                                   };
+
+            this._reportGeneratorWorker.RunWorkerAsync(this._reportData);
+
+            /*// var fileName = string.Format("{0}_{1}", DateTime.Now, Path.GetFileName(this.FileName));
             var fileName = @"c:\test.xlsx";
 
-            var sheetName = string.Format("Replicated_{0}", this.SelectedSheet.Replace("$", string.Empty));
+            // var sheetName = string.Format("Replicated_{0}", this.SelectedSheet.Replace("$", string.Empty));
 
-            ExcelWriter.ExportToXlsx(fileName, results, sheetName);
+            var sheetName = "Sheet1";
 
-            Process.Start(fileName);
+            ExcelWriter.ExportToXlsx(results, fileName, sheetName);
+
+            Process.Start(fileName);*/
         }
+
+        /// <summary>
+        /// The report generator worker on do work.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="doWorkEventArgs">
+        /// The do work event args.
+        /// </param>
+        private void ReportGeneratorWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
+        {
+            var reportData = doWorkEventArgs.Argument as IReportData;
+
+            if (reportData == null)
+            {
+                return;
+            }
+
+            var reportGenerator = GenerateReportFactory.GetReportGeneratorInstance(reportData.ReportGeneratorType);
+
+            reportGenerator.GenerateReport(reportData, this._reportGeneratorWorker);
+        }
+
+        /// <summary>
+        /// Reports the generator worker on progress changed.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="progressChangedEventArgs">
+        /// The <see cref="ProgressChangedEventArgs"/> instance containing the event data.
+        /// </param>
+        private void ReportGeneratorWorkerOnProgressChanged(
+            object sender, 
+            ProgressChangedEventArgs progressChangedEventArgs)
+        {
+            this.IsBusy = true;
+        }
+
+        /// <summary>
+        /// Reports the generator worker run worker completed.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="e">
+        /// The <see cref="RunWorkerCompletedEventArgs"/> instance containing the event data.
+        /// </param>
+        private void ReportGeneratorWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+                this.IsBusy = false;
+                return;
+            }
+
+            if (e.Error != null)
+            {
+                // Dialogs.ShowError("Error while performing the data load", "Data Load");
+                this.IsBusy = false;
+                return;
+            }
+
+            switch (this._reportData.ReportGeneratorType)
+            {
+                case ReportGeneratorType.DissectData:
+                    {
+                        Process.Start(this._reportData.Directory);
+                        this.IsBusy = false;
+                        return;
+                    }
+
+                case ReportGeneratorType.ReplicateData:
+                    {
+                        Process.Start(this._reportData.FileName);
+                        this.IsBusy = false;
+                        return;
+                    }
+            }
+        }
+
+        /// <summary>
+        /// Reports the loader worker on do work.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="doWorkEventArgs">
+        /// The <see cref="DoWorkEventArgs"/> instance containing the event data.
+        /// </param>
+        private void ReportLoaderWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
+        {
+            var reportData = doWorkEventArgs.Argument as IReportData;
+
+            if (reportData == null)
+            {
+                return;
+            }
+
+            var reportLoader = LoadReportFactory.GetReportLoaderInstance(reportData.ReportLoaderType);
+
+            doWorkEventArgs.Result = reportLoader.LoadReportData(reportData, this._reportLoaderWorker);
+         }
 
         #endregion
     }
